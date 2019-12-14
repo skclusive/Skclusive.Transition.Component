@@ -1,0 +1,8 @@
+﻿@inherits TransitionGroupComponent
+
+<CascadingValue Value="GroupContext">
+    @foreach(var item in Items)
+    {
+        @item.Item2(item.Item1);
+    }
+</CascadingValue>

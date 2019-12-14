@@ -1,0 +1,8 @@
+﻿@inherits TransitionComponent
+
+@if(Current != TransitionState.Unmounted)
+{
+    <CascadingValue Value="Context">
+        @ChildContent?.Invoke(Context)
+    </CascadingValue>
+}
