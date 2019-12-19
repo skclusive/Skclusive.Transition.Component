@@ -13,42 +13,42 @@ namespace TransitionApp.Components
         private readonly static int DURATION = 2000;
 
         private readonly static IEnumerable<Tuple<string, object>> DEFAULT_STYLES = new List<Tuple<string, object>>()
-    {
-        Tuple.Create<string, object>("opacity", 0),
-        Tuple.Create<string, object>("color", "#ffffff"),
-        Tuple.Create<string, object>("transition", $"opacity {DURATION}ms ease-in-out")
-    };
+        {
+            Tuple.Create<string, object>("opacity", 0),
+            Tuple.Create<string, object>("color", "#ffffff"),
+            Tuple.Create<string, object>("transition", $"opacity {DURATION}ms ease-in-out")
+        };
 
         private readonly static IDictionary<TransitionState, IEnumerable<Tuple<string, object>>> TRANSITION_STYLES = new Dictionary<TransitionState, IEnumerable<Tuple<string, object>>>()
-    {
         {
-            TransitionState.Entering, new List<Tuple<string, object>>()
             {
-                Tuple.Create<string, object>("opacity", 1),
-                Tuple.Create<string, object>("background-color", "green")
-            }
-        },
-        {
-            TransitionState.Entered, new List<Tuple<string, object>>()
+                TransitionState.Entering, new List<Tuple<string, object>>()
+                {
+                    Tuple.Create<string, object>("opacity", 1),
+                    Tuple.Create<string, object>("background-color", "green")
+                }
+            },
             {
-                Tuple.Create<string, object>("opacity", 1),
-                Tuple.Create<string, object>("background-color", "blue")
-            }
-        },
-        {
-            TransitionState.Exiting, new List<Tuple<string, object>>()
+                TransitionState.Entered, new List<Tuple<string, object>>()
+                {
+                    Tuple.Create<string, object>("opacity", 1),
+                    Tuple.Create<string, object>("background-color", "blue")
+                }
+            },
             {
-                Tuple.Create<string, object>("opacity", 0),
-                Tuple.Create<string, object>("background-color", "red")
-            }
-        },
-        {
-            TransitionState.Exited, new List<Tuple<string, object>>()
+                TransitionState.Exiting, new List<Tuple<string, object>>()
+                {
+                    Tuple.Create<string, object>("opacity", 0),
+                    Tuple.Create<string, object>("background-color", "red")
+                }
+            },
             {
-                Tuple.Create<string, object>("opacity", 0)
+                TransitionState.Exited, new List<Tuple<string, object>>()
+                {
+                    Tuple.Create<string, object>("opacity", 0)
+                }
             }
-        }
-    };
+        };
 
         protected string GetTransitionStyle(TransitionState state)
         {
@@ -78,14 +78,14 @@ namespace TransitionApp.Components
 
             Console.WriteLine($"Items.Count: {Items.Count}");
 
-            StateHasChanged();
+            // StateHasChanged();
 
             return Task.CompletedTask;
         }
 
         private RenderFragment<ITransitionItemContext> GetTransition() => ((gcontext) =>
             (builder1) => {
-                builder1.OpenRegion(gcontext.Key);
+                //builder1.OpenRegion(gcontext.Key);
                 builder1.OpenComponent<Transition>(gcontext.Key + 1);
                 builder1.AddAttribute(gcontext.Key + 2, "Name", gcontext.Name);
                 builder1.AddAttribute(gcontext.Key + 3, "In", gcontext.In);
@@ -112,7 +112,7 @@ namespace TransitionApp.Components
                 }));
                 builder1.SetKey(gcontext.Name);
                 builder1.CloseComponent();
-                builder1.CloseRegion();
+                //builder1.CloseRegion();
         });
 
 

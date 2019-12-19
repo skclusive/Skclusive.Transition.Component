@@ -3,6 +3,8 @@
 <CascadingValue Value="GroupContext">
     @foreach(var item in Items)
     {
-        @item.Item2(item.Item1);
+        <TransitionChild @key="item.Item1.Name">
+            @item.Item2(item.Item1)
+        </TransitionChild>
     }
 </CascadingValue>

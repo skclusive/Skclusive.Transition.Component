@@ -13,7 +13,7 @@
   </ItemGroup>
 
    <ItemGroup>
-     <!-- <PackageReference Include="Skclusive.Transition.Component" Version="1.0.0" /> -->
+     <!-- <PackageReference Include="Skclusive.Transition.Component" Version="1.0.1" /> -->
      <ProjectReference Include="..\..\src\Transition\Transition.csproj" />
    </ItemGroup>
 

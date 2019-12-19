@@ -35,7 +35,7 @@ namespace Skclusive.Transition.Component
 
         public override async Task SetParametersAsync(ParameterView parameters)
         {
-            PreviousItems = Items.ToList();
+            PreviousItems = Items.Where(item => item.Item1.In != false).ToList();
 
             await base.SetParametersAsync(parameters);
 
@@ -74,6 +74,7 @@ namespace Skclusive.Transition.Component
             List<Tuple<ITransitionItemContext, RenderFragment<ITransitionItemContext>>> previousItems, List<Tuple<ITransitionItemContext, RenderFragment<ITransitionItemContext>>> nextItems)
         {
             var previousMapping = previousItems.ToDictionary(k => k.Item1.Name, k => k);
+
             var nextsMapping = nextItems.ToDictionary(k => k.Item1.Name, k => k);
 
             Tuple<ITransitionItemContext, RenderFragment<ITransitionItemContext>> GetItem(string name) => nextsMapping.ContainsKey(name) ? nextsMapping[name] : previousMapping[name];
@@ -132,7 +133,7 @@ namespace Skclusive.Transition.Component
 
                 var previousItem = hasPrev ? previousMapping[name] : null;
 
-                var isLeaving = hasPrev && (!previousItem.Item1.In ?? false);
+                var isLeaving = hasPrev && !previousItem.Item1.In.Value;
 
                 if (hasNext && (!hasPrev || isLeaving))
                 {
@@ -161,7 +162,7 @@ namespace Skclusive.Transition.Component
 
                 return null;
 
-            }).Where(item => item != null).ToList();
+            }).ToList();
         }
 
         private Action<IReference> HandleExited(ITransitionItem item)
@@ -175,7 +176,7 @@ namespace Skclusive.Transition.Component
 
                 item.OnExited?.Invoke(_ref);
 
-                if(Mounted)
+                if (Mounted)
                 {
                     Items = Items.Where(it => it.Item1.Name != item.Name).ToList();
 
