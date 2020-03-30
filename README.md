@@ -14,3 +14,5 @@ This is an attempt to port [react-transition-group](https://github.com/reactjs/r
 ## License
 
 Skclusive.Transition.Component is licensed under [MIT license](http://www.opensource.org/licenses/mit-license.php)
+
+DomHelpers Services and DomHelpers Scripts addition
