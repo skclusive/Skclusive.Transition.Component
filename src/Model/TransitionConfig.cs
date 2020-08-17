@@ -40,22 +40,22 @@ namespace Skclusive.Transition.Component
         public int? ExitTimeout { set; get; }
 
         [Parameter]
-        public Action<IReference, bool> OnEnter { set; get; }
+        public EventCallback<(IReference, bool)> OnEnter { set; get; }
 
         [Parameter]
-        public Action<IReference, bool> OnEntering { set; get; }
+        public EventCallback<(IReference, bool)> OnEntering { set; get; }
 
         [Parameter]
-        public Action<IReference, bool> OnEntered { set; get; }
+        public EventCallback<(IReference, bool)> OnEntered { set; get; }
 
         [Parameter]
-        public Action<IReference> OnExit { set; get; }
+        public EventCallback<IReference> OnExit { set; get; }
 
         [Parameter]
-        public Action<IReference> OnExiting { set; get; }
+        public EventCallback<IReference> OnExiting { set; get; }
 
         [Parameter]
-        public Action<IReference> OnExited { set; get; }
+        public EventCallback<IReference> OnExited { set; get; }
 
         [Parameter]
         public RenderFragment<ITransitionContext> ChildContent { get; set; }

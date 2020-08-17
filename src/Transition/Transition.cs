@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Components;
 using Skclusive.Core.Component;
 using System;
+using System.Threading.Tasks;
 
 namespace Skclusive.Transition.Component
 {
@@ -8,13 +9,13 @@ namespace Skclusive.Transition.Component
     {
         protected TransitionState Initial { set; get; } = TransitionState.None;
 
-        protected TransitionState Current { set; get; } = TransitionState.None;
+        public TransitionState Current { set; get; } = TransitionState.None;
 
         protected TransitionState Next { set; get; } = TransitionState.None;
 
         public IReference RefBack { get; protected set; } = new Reference();
 
-        protected int TimeoutAppear => AppearTimeout ?? Timeout;
+        protected int TimeoutAppear => AppearTimeout ?? EnterTimeout ?? Timeout;
 
         protected int TimeoutEnter => EnterTimeout ?? Timeout;
 
@@ -22,6 +23,15 @@ namespace Skclusive.Transition.Component
 
         [CascadingParameter]
         public ITransitionGroupContext GroupContext { get; set; }
+
+        protected bool? PrevIn { set; get; }
+
+        public override async Task SetParametersAsync(ParameterView parameters)
+        {
+            PrevIn = In;
+
+            await base.SetParametersAsync(parameters);
+        }
 
         protected override void OnInitialized()
         {
@@ -59,38 +69,41 @@ namespace Skclusive.Transition.Component
         {
             if (In.HasValue && In.Value)
             {
-                if (Initial == TransitionState.Unmounted)
+                if (Current == TransitionState.Unmounted)
                 {
                     Current = TransitionState.Exited;
                 }
             }
         }
 
-        protected override void OnAfterMount()
+        protected override Task OnAfterMountAsync()
         {
-            UpdateState(mounting: true, Next);
+            return UpdateState(mounting: true, Next);
         }
 
-        protected override void OnAfterUpdate()
+        protected override Task OnAfterUpdateAsync()
         {
             var next = TransitionState.None;
 
-            if (In.HasValue && In.Value)
+            if (PrevIn != In)
             {
-                if (Current != TransitionState.Entering && Current != TransitionState.Entered)
+                if (In.HasValue && In.Value)
                 {
-                    next = TransitionState.Entering;
+                    if (Current != TransitionState.Entering && Current != TransitionState.Entered)
+                    {
+                        next = TransitionState.Entering;
+                    }
+                }
+                else if (Current == TransitionState.Entering || Current == TransitionState.Entered)
+                {
+                    next = TransitionState.Exiting;
                 }
             }
-            else if (Current == TransitionState.Entering || Current == TransitionState.Entered)
-            {
-                next = TransitionState.Exiting;
-            }
 
-            UpdateState(mounting: false, next);
+            return UpdateState(mounting: false, next);
         }
 
-        protected void UpdateState(bool mounting, TransitionState next)
+        protected async Task UpdateState(bool mounting, TransitionState next)
         {
             // var next = Next;
             if (next != TransitionState.None)
@@ -101,29 +114,41 @@ namespace Skclusive.Transition.Component
 
                 if (next == TransitionState.Entering)
                 {
-                    PerformEnter(mounting);
+                    await PerformEnter(mounting);
                 }
                 else
                 {
-                    PerformExit();
+                    await PerformExit();
                 }
             }
             else if (UnmountOnExit && Current == TransitionState.Exited)
             {
                 Current = TransitionState.Unmounted;
 
-                StateHasChanged();
+                await InvokeAsync(StateHasChanged);
             }
         }
 
-        protected IDisposable SafeStateChange(TransitionState state, Action action)
+        protected async Task<IDisposable> SafeStateChange(TransitionState state, Func<Task> action)
         {
             Current = state;
 
-            return StateHasChanged(CreateTimeout(action, 200));
+            var disposable = StateHasChanged(CreateTimeout(async () =>
+            {
+                await action();
+
+                await InvokeAsync(StateHasChanged);
+
+            }, 0), immediate: false);
+
+            await InvokeAsync(StateHasChanged);
+
+            return disposable;
+
+            // return Task.FromResult(disposable);
         }
 
-        protected void PerformEnter(bool mounting)
+        protected async Task PerformEnter(bool mounting)
         {
             var appearing = GroupContext?.IsMounting ?? mounting;
 
@@ -131,74 +156,78 @@ namespace Skclusive.Transition.Component
             {
                 Current = TransitionState.Entered;
 
-                RunOnEntered(appearing: false);
+                await RunOnEntered(appearing: false);
 
-                StateHasChanged();
+                await InvokeAsync(StateHasChanged);
 
                 return;
             }
 
             Current = TransitionState.Enter;
 
-            OnEnter?.Invoke(RefBack, appearing);
+            await OnEnter.InvokeAsync((RefBack, appearing));
 
-            SafeStateChange(TransitionState.Entering, () =>
+            await InvokeAsync(StateHasChanged);
+
+            await SafeStateChange(TransitionState.Entering, async () =>
             {
-                OnEntering?.Invoke(RefBack, appearing);
+                await OnEntering.InvokeAsync((RefBack, appearing));
 
-                OnTransitionEnd(() =>
+                await OnTransitionEnd(async () =>
                 {
                     Current = TransitionState.Entered;
 
-                    RunOnEntered(appearing);
+                    await RunOnEntered(appearing);
 
-                    StateHasChanged();
+                    await InvokeAsync(StateHasChanged);
 
                 }, appearing ? TimeoutAppear : TimeoutEnter);
             });
         }
 
-        protected void PerformExit()
+        protected async Task PerformExit()
         {
             if (!(Exit.HasValue && Exit.Value))
             {
                 Current = TransitionState.Exited;
 
-                RunOnExited();
+                await RunOnExited();
 
-                StateHasChanged();
+                await InvokeAsync(StateHasChanged);
 
                 return;
             }
 
             Current = TransitionState.Exit;
 
-            OnExit?.Invoke(RefBack);
+            // await InvokeAsync(StateHasChanged);
 
-            SafeStateChange(TransitionState.Exiting, () =>
+            await OnExit.InvokeAsync(RefBack);
+
+            await SafeStateChange(TransitionState.Exiting, async () =>
             {
-                OnExiting?.Invoke(RefBack);
+                await OnExiting.InvokeAsync(RefBack);
 
-                OnTransitionEnd(() =>
+                await OnTransitionEnd(async () =>
                 {
                     Current = TransitionState.Exited;
 
-                    RunOnExited();
+                    await RunOnExited();
 
-                    StateHasChanged();
+                    await InvokeAsync(StateHasChanged);
 
                 }, TimeoutExit);
             });
         }
 
-        protected void RunOnEntered(bool appearing)
+        protected Task RunOnEntered(bool appearing)
         {
-            OnEntered?.Invoke(RefBack, appearing);
+            return OnEntered.InvokeAsync((RefBack, appearing));
         }
 
-        protected void RunOnExited()
+        protected Task RunOnExited()
         {
-            OnExited?.Invoke(RefBack);
+            return OnExited.InvokeAsync(RefBack);
         }
 
         protected IDisposable TransitionDisposal { set; get; }
@@ -208,11 +237,21 @@ namespace Skclusive.Transition.Component
             .WithRefBack(RefBack)
             .Build();
 
-        protected void OnTransitionEnd(Action action, int delay)
+        protected Task OnTransitionEnd(Func<Task> action, int delay)
         {
             DisposeCallback();
 
-            TransitionDisposal = SetTimeout(action, delay);
+            var completionSource = new TaskCompletionSource<object>();
+
+            TransitionDisposal = SetTimeout(async () =>
+            {
+                await action();
+
+                completionSource.SetResult(null);
+
+            }, delay);
+
+            return completionSource.Task;
         }
 
         protected void DisposeCallback()
@@ -226,8 +265,8 @@ namespace Skclusive.Transition.Component
         {
             DisposeCallback();
 
-            OnEntered = null;
-            OnExited = null;
+            // OnEntered = null;
+            // OnExited = null;
         }
     }
 }

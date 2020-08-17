@@ -94,7 +94,8 @@ namespace Skclusive.Transition.Component
                 _class += $" {GetClassNames(TransitionEvent.Enter)[TransitionEventPhase.Done]}";
             }
 
-            yield return _class;
+            foreach(var _clas in _class.Split(" "))
+                yield return _clas;
 
             AppliedClasses[@event][phase] = _class;
         }
@@ -121,77 +122,89 @@ namespace Skclusive.Transition.Component
             }
         }
 
-        protected void UpdateClasses(IReference refback, IEnumerable<string> adds, IEnumerable<string> removes, bool trigger = false)
+        protected Task UpdateClassesAsync(IReference refback, IEnumerable<string> adds, IEnumerable<string> removes, bool trigger = false)
         {
-            _ = DomHelpers.UpdateClassesAsync(refback.Current, removes.ToList(), adds.ToList(), trigger);
+            List<string> removeClasses = removes.ToList();
+
+            List<string> addClasses = adds.ToList();
+
+            _ = DomHelpers.UpdateClassesAsync(refback.Current, removeClasses, addClasses, trigger);
+
+            return Task.CompletedTask;
         }
 
-        protected void HandleEnter(IReference refback, bool appear)
+        protected async Task HandleEnterAsync((IReference, bool) args)
         {
+            await OnEnter.InvokeAsync(args);
+
+            (IReference refback, bool appear) = args;
+
             var @event = appear ? TransitionEvent.Appear : TransitionEvent.Enter;
 
             var removes = RemoveClasses(TransitionEvent.Exit);
 
             var adds = AddClass(@event, TransitionEventPhase.Base);
 
-            UpdateClasses(refback, adds, removes);
-
-            OnEnter?.Invoke(refback, appear);
+            await UpdateClassesAsync(refback, adds, removes);
         }
 
-        protected void HandleEntering(IReference refback, bool appearing)
+        protected async Task HandleEnteringAsync((IReference, bool) args)
         {
+            await OnEntering.InvokeAsync(args);
+
+            (IReference refback, bool appearing) = args;
+
             var @event = appearing ? TransitionEvent.Appear : TransitionEvent.Enter;
 
             var adds = AddClass(@event, TransitionEventPhase.Active);
 
-            UpdateClasses(refback, adds, new string[] { }, trigger: true);
-
-            OnEntering?.Invoke(refback, appearing);
+            await UpdateClassesAsync(refback, adds, new string[] { }, trigger: true);
         }
 
-        protected void HandleEntered(IReference refback, bool appeared)
+        protected async Task HandleEnteredAsync((IReference, bool) args)
         {
+            await OnEntered.InvokeAsync(args);
+
+            (IReference refback, bool appeared) = args;
+
             var @event = appeared ? TransitionEvent.Appear : TransitionEvent.Enter;
 
             var removes = RemoveClasses(@event);
 
             var adds = AddClass(@event, TransitionEventPhase.Done);
 
-            UpdateClasses(refback, adds, removes);
-
-            OnEntered?.Invoke(refback, appeared);
+            await UpdateClassesAsync(refback, adds, removes);
         }
 
-        protected void HandleExit(IReference refback)
+        protected async Task HandleExitAsync(IReference refback)
         {
+            await OnExit.InvokeAsync(refback);
+
             var removes = RemoveClasses(TransitionEvent.Appear).Concat(RemoveClasses(TransitionEvent.Enter));
 
             var adds = AddClass(TransitionEvent.Exit, TransitionEventPhase.Base);
 
-            UpdateClasses(refback, adds, removes);
-
-            OnExit?.Invoke(refback);
+            await UpdateClassesAsync(refback, adds, removes);
         }
 
-        protected void HandleExiting(IReference refback)
+        protected async Task HandleExitingAsync(IReference refback)
         {
+            await OnExiting.InvokeAsync(refback);
+
             var adds = AddClass(TransitionEvent.Exit, TransitionEventPhase.Active);
 
-            UpdateClasses(refback, adds, new string[] { }, trigger: true);
-
-            OnExiting?.Invoke(refback);
+            await UpdateClassesAsync(refback, adds, new string[] { }, trigger: true);
         }
 
-        protected void HandleExited(IReference refback)
+        protected async Task HandleExitedAsync(IReference refback)
         {
+            await OnExited.InvokeAsync(refback);
+
             var removes = RemoveClasses(TransitionEvent.Exit);
 
             var adds = AddClass(TransitionEvent.Exit, TransitionEventPhase.Done);
 
-            UpdateClasses(refback, adds, removes);
-
-            OnExited?.Invoke(refback);
+            await UpdateClassesAsync(refback, adds, removes);
         }
     }
 }

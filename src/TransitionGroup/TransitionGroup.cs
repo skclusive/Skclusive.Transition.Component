@@ -165,16 +165,19 @@ namespace Skclusive.Transition.Component
             }).ToList();
         }
 
-        private Action<IReference> HandleExited(ITransitionItem item)
+        private Func<IReference, Task> HandleExited(ITransitionItem item)
         {
-            return (IReference _ref) =>
+            return async (IReference _ref) =>
             {
                 if (Children.Any(child => child.Name == item.Name))
                 {
                     return;
                 }
 
-                item.OnExited?.Invoke(_ref);
+                if (item.OnExited != null)
+                {
+                    await item.OnExited.Invoke(_ref);
+                }
 
                 if (Mounted)
                 {
@@ -182,7 +185,7 @@ namespace Skclusive.Transition.Component
 
                     PreviousItems = PreviousItems.Where(it => it.Item1.Name != item.Name).ToList();
 
-                    StateHasChanged();
+                    await InvokeAsync(StateHasChanged);
                 }
             };
         }
