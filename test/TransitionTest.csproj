@@ -18,7 +18,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\src\Transition.csproj" Version="5.0.0-rc1" />
+    <ProjectReference Include="..\src\Transition.csproj" Version="5.0.0-rc4" />
   </ItemGroup>
 
 </Project>
