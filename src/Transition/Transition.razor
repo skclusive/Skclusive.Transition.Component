@@ -1,7 +1,7 @@
 ﻿@namespace Skclusive.Transition.Component
 @inherits TransitionComponent
 
-@if(Current != TransitionState.Unmounted)
+@if (Current != TransitionState.Unmounted)
 {
     <CascadingValue Value="Context">
         @ChildContent?.Invoke(Context)

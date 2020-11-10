@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 using Skclusive.Core.Component;
 
 namespace Skclusive.Transition.Component
@@ -17,7 +18,7 @@ namespace Skclusive.Transition.Component
 
         bool? Exit { get; }
 
-        Action<IReference> OnExited { get; }
+        Func<IReference, Task> OnExited { get; }
     }
 
     public class TransitionItemContextBuilder
@@ -36,7 +37,7 @@ namespace Skclusive.Transition.Component
 
             public bool? Exit { get; internal set; }
 
-            public Action<IReference> OnExited { get; internal set; }
+            public Func<IReference, Task> OnExited { get; internal set; }
         }
 
         private readonly TransitionItemContext context = new TransitionItemContext();
@@ -88,7 +89,7 @@ namespace Skclusive.Transition.Component
             return this;
         }
 
-        public TransitionItemContextBuilder WithOnExited(Action<IReference> onExited)
+        public TransitionItemContextBuilder WithOnExited(Func<IReference, Task> onExited)
         {
             context.OnExited = onExited;
 

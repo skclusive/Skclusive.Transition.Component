@@ -1,18 +1,19 @@
 ﻿@namespace Skclusive.Transition.Component
 @inherits CSSTransitionComponent
 
-<Transition Name="@Name"
-            In="@In"
-            Appear="@Appear"
-            Enter="@Enter"
-            Exit="@Exit"
-            MountOnEnter="@MountOnEnter"
-            UnmountOnExit="@UnmountOnExit"
-            Timeout="@Timeout"
-            OnEnter="@HandleEnter"
-            OnEntering="@HandleEntering"
-            OnEntered="@HandleEntered"
-            OnExit="@HandleExit"
-            OnExiting="@HandleExiting"
-            OnExited="@HandleExited"
-            ChildContent="@ChildContent" />
+<Transition
+    Name="@Name"
+    In="@In"
+    Appear="@Appear"
+    Enter="@Enter"
+    Exit="@Exit"
+    MountOnEnter="@MountOnEnter"
+    UnmountOnExit="@UnmountOnExit"
+    Timeout="@Timeout"
+    OnEnter="@HandleEnterAsync"
+    OnEntering="@HandleEnteringAsync"
+    OnEntered="@HandleEnteredAsync"
+    OnExit="@HandleExitAsync"
+    OnExiting="@HandleExitingAsync"
+    OnExited="@HandleExitedAsync"
+    ChildContent="@ChildContent" />
