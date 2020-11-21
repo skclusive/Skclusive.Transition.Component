@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Components;
 using Skclusive.Core.Component;
 using System;
+using System.Threading.Tasks;
 
 namespace Skclusive.Transition.Component
 {
@@ -28,6 +29,9 @@ namespace Skclusive.Transition.Component
         public bool UnmountOnExit { set; get; }
 
         [Parameter]
+        public bool? Optimized { set; get; }
+
+        [Parameter]
         public int Timeout { set; get; }
 
         [Parameter]
@@ -40,22 +44,22 @@ namespace Skclusive.Transition.Component
         public int? ExitTimeout { set; get; }
 
         [Parameter]
-        public EventCallback<(IReference, bool)> OnEnter { set; get; }
+        public Func<(IReference, bool), Task> OnEnter { set; get; }
 
         [Parameter]
-        public EventCallback<(IReference, bool)> OnEntering { set; get; }
+        public Func<(IReference, bool), Task> OnEntering { set; get; }
 
         [Parameter]
-        public EventCallback<(IReference, bool)> OnEntered { set; get; }
+        public Func<(IReference, bool), Task> OnEntered { set; get; }
 
         [Parameter]
-        public EventCallback<IReference> OnExit { set; get; }
+        public Func<IReference, Task> OnExit { set; get; }
 
         [Parameter]
-        public EventCallback<IReference> OnExiting { set; get; }
+        public Func<IReference, Task> OnExiting { set; get; }
 
         [Parameter]
-        public EventCallback<IReference> OnExited { set; get; }
+        public Func<IReference, Task> OnExited { set; get; }
 
         [Parameter]
         public RenderFragment<ITransitionContext> ChildContent { get; set; }

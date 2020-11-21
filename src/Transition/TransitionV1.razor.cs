@@ -5,10 +5,8 @@ using System.Threading.Tasks;
 
 namespace Skclusive.Transition.Component
 {
-    public class TransitionComponent : TransitionConfig
+    public partial class TransitionV1 : TransitionConfig
     {
-        protected TransitionState Initial { set; get; } = TransitionState.None;
-
         public TransitionState Current { set; get; } = TransitionState.None;
 
         protected TransitionState Next { set; get; } = TransitionState.None;
@@ -37,6 +35,8 @@ namespace Skclusive.Transition.Component
         {
             var groupMounting = GroupContext?.IsMounting;
 
+            var initial = TransitionState.None;
+
             // In the context of a TransitionGroup all enters are really appears
 
             var appear = groupMounting.HasValue && !groupMounting.Value ? Enter : Appear;
@@ -45,24 +45,26 @@ namespace Skclusive.Transition.Component
             {
                 if (appear.HasValue && appear.Value)
                 {
-                    Initial = TransitionState.Exited;
+                    initial = TransitionState.Exited;
                     Next = TransitionState.Entering;
                 }
                 else
                 {
-                    Initial = TransitionState.Entered;
+                    initial = TransitionState.Entered;
                 }
             }
             else if (UnmountOnExit || MountOnEnter)
             {
-                Initial = TransitionState.Unmounted;
+                initial = TransitionState.Unmounted;
             }
             else
             {
-                Initial = TransitionState.Exited;
+                initial = TransitionState.Exited;
             }
 
-            Current = Initial;
+            Current = initial;
+
+            // Console.WriteLine($"{Name}.TransitionV1.OnInitialized: Current: {Current} Initial: {initial} Next: {Next}");
         }
 
         protected override void OnParametersSet()
@@ -74,6 +76,8 @@ namespace Skclusive.Transition.Component
                     Current = TransitionState.Exited;
                 }
             }
+
+            // Console.WriteLine($"{Name}.TransitionV1.OnParametersSet: Current: {Current} In: {In}");
         }
 
         protected override Task OnAfterMountAsync()
@@ -133,6 +137,8 @@ namespace Skclusive.Transition.Component
         {
             Current = state;
 
+            // Console.WriteLine($"{Name}.TransitionV1.SafeStateChange: Current: {Current}");
+
             var disposable = StateHasChanged(CreateTimeout(async () =>
             {
                 await action();
@@ -156,7 +162,7 @@ namespace Skclusive.Transition.Component
             {
                 Current = TransitionState.Entered;
 
-                await RunOnEntered(appearing: false);
+                await (OnEntered?.Invoke((RefBack, false)) ?? Task.CompletedTask);
 
                 await InvokeAsync(StateHasChanged);
 
@@ -165,19 +171,19 @@ namespace Skclusive.Transition.Component
 
             Current = TransitionState.Enter;
 
-            await OnEnter.InvokeAsync((RefBack, appearing));
+            await (OnEnter?.Invoke((RefBack, appearing)) ?? Task.CompletedTask);
 
             await InvokeAsync(StateHasChanged);
 
             await SafeStateChange(TransitionState.Entering, async () =>
             {
-                await OnEntering.InvokeAsync((RefBack, appearing));
+                await (OnEntering?.Invoke((RefBack, appearing)) ?? Task.CompletedTask);
 
                 await OnTransitionEnd(async () =>
                 {
                     Current = TransitionState.Entered;
 
-                    await RunOnEntered(appearing);
+                    await (OnEntered?.Invoke((RefBack, appearing)) ?? Task.CompletedTask);
 
                     await InvokeAsync(StateHasChanged);
 
@@ -191,7 +197,7 @@ namespace Skclusive.Transition.Component
             {
                 Current = TransitionState.Exited;
 
-                await RunOnExited();
+                await (OnExited?.Invoke(RefBack) ?? Task.CompletedTask);
 
                 await InvokeAsync(StateHasChanged);
 
@@ -202,32 +208,22 @@ namespace Skclusive.Transition.Component
 
             // await InvokeAsync(StateHasChanged);
 
-            await OnExit.InvokeAsync(RefBack);
+            await (OnExit?.Invoke(RefBack) ?? Task.CompletedTask);
 
             await SafeStateChange(TransitionState.Exiting, async () =>
             {
-                await OnExiting.InvokeAsync(RefBack);
+                await (OnExiting?.Invoke(RefBack) ?? Task.CompletedTask);
 
                 await OnTransitionEnd(async () =>
                 {
                     Current = TransitionState.Exited;
 
-                    await RunOnExited();
+                    await (OnExited?.Invoke(RefBack) ?? Task.CompletedTask);
 
                     await InvokeAsync(StateHasChanged);
 
                 }, TimeoutExit);
             });
-        }
-
-        protected Task RunOnEntered(bool appearing)
-        {
-            return OnEntered.InvokeAsync((RefBack, appearing));
-        }
-
-        protected Task RunOnExited()
-        {
-            return OnExited.InvokeAsync(RefBack);
         }
 
         protected IDisposable TransitionDisposal { set; get; }
