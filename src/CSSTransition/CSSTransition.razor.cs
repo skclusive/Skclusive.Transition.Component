@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Skclusive.Transition.Component
 {
-    public class CSSTransitionComponent : TransitionConfig
+    public partial class CSSTransition : TransitionConfig
     {
         [Inject]
         public DomHelpers DomHelpers { set; get; }
@@ -46,7 +46,7 @@ namespace Skclusive.Transition.Component
         {
             bool hasPrefix = !string.IsNullOrWhiteSpace(EventClass);
 
-            string baseClass = null, activeClass = null, doneClass = null;
+            string baseClass = "", activeClass = "", doneClass = "";
 
             if (hasPrefix)
             {
@@ -59,17 +59,17 @@ namespace Skclusive.Transition.Component
             {
                 if (Enum.TryParse($"{@event}", out TransitionEventClass baseEvent))
                 {
-                    baseClass = EventClasses.ContainsKey(baseEvent) ? EventClasses[baseEvent] : null;
+                    baseClass = EventClasses.ContainsKey(baseEvent) ? EventClasses[baseEvent] : "";
                 }
 
                 if (Enum.TryParse($"{@event}{TransitionEventPhase.Active}", out TransitionEventClass activeEvent))
                 {
-                    activeClass = EventClasses.ContainsKey(activeEvent) ? EventClasses[activeEvent] : null;
+                    activeClass = EventClasses.ContainsKey(activeEvent) ? EventClasses[activeEvent] : "";
                 }
 
                 if (Enum.TryParse($"{@event}{TransitionEventPhase.Done}", out TransitionEventClass doneEvent))
                 {
-                    doneClass = EventClasses.ContainsKey(doneEvent) ? EventClasses[doneEvent] : null;
+                    doneClass = EventClasses.ContainsKey(doneEvent) ? EventClasses[doneEvent] : "";
                 }
             }
 
@@ -94,8 +94,11 @@ namespace Skclusive.Transition.Component
                 _class += $" {GetClassNames(TransitionEvent.Enter)[TransitionEventPhase.Done]}";
             }
 
-            foreach(var _clas in _class.Split(" "))
-                yield return _clas;
+            if (!string.IsNullOrWhiteSpace(_class))
+            {
+                foreach(var _clas in _class.Split(' '))
+                    yield return _clas;
+            }
 
             AppliedClasses[@event][phase] = _class;
         }
@@ -106,36 +109,37 @@ namespace Skclusive.Transition.Component
 
             AppliedClasses[@event] = new Dictionary<TransitionEventPhase, string>();
 
-            if (classes.TryGetValue(TransitionEventPhase.Base, out var baseClass))
+            if (classes.TryGetValue(TransitionEventPhase.Base, out var baseClass) && !string.IsNullOrWhiteSpace(baseClass))
             {
                 yield return baseClass;
             }
 
-            if (classes.TryGetValue(TransitionEventPhase.Active, out var activeClass))
+            if (classes.TryGetValue(TransitionEventPhase.Active, out var activeClass) && !string.IsNullOrWhiteSpace(activeClass))
             {
                 yield return activeClass;
             }
 
-            if (classes.TryGetValue(TransitionEventPhase.Done, out var doneClass))
+            if (classes.TryGetValue(TransitionEventPhase.Done, out var doneClass) && !string.IsNullOrWhiteSpace(doneClass))
             {
                 yield return doneClass;
             }
         }
 
-        protected Task UpdateClassesAsync(IReference refback, IEnumerable<string> adds, IEnumerable<string> removes, bool trigger = false)
+        protected async Task UpdateClassesAsync(IReference refback, IEnumerable<string> adds, IEnumerable<string> removes, bool trigger = false)
         {
             List<string> removeClasses = removes.ToList();
 
             List<string> addClasses = adds.ToList();
 
-            _ = DomHelpers.UpdateClassesAsync(refback.Current, removeClasses, addClasses, trigger);
-
-            return Task.CompletedTask;
+            if (removeClasses.Count > 0 || addClasses.Count > 0)
+            {
+                await DomHelpers.UpdateClassesAsync(refback.Current, removeClasses, addClasses, trigger);
+            }
         }
 
         protected async Task HandleEnterAsync((IReference, bool) args)
         {
-            await OnEnter.InvokeAsync(args);
+            await (OnEnter?.Invoke(args) ?? Task.CompletedTask);
 
             (IReference refback, bool appear) = args;
 
@@ -150,7 +154,7 @@ namespace Skclusive.Transition.Component
 
         protected async Task HandleEnteringAsync((IReference, bool) args)
         {
-            await OnEntering.InvokeAsync(args);
+            await (OnEntering?.Invoke(args) ?? Task.CompletedTask);
 
             (IReference refback, bool appearing) = args;
 
@@ -163,7 +167,7 @@ namespace Skclusive.Transition.Component
 
         protected async Task HandleEnteredAsync((IReference, bool) args)
         {
-            await OnEntered.InvokeAsync(args);
+            await (OnEntered?.Invoke(args) ?? Task.CompletedTask);
 
             (IReference refback, bool appeared) = args;
 
@@ -178,7 +182,7 @@ namespace Skclusive.Transition.Component
 
         protected async Task HandleExitAsync(IReference refback)
         {
-            await OnExit.InvokeAsync(refback);
+            await (OnExit?.Invoke(refback) ?? Task.CompletedTask);
 
             var removes = RemoveClasses(TransitionEvent.Appear).Concat(RemoveClasses(TransitionEvent.Enter));
 
@@ -189,7 +193,7 @@ namespace Skclusive.Transition.Component
 
         protected async Task HandleExitingAsync(IReference refback)
         {
-            await OnExiting.InvokeAsync(refback);
+            await (OnExiting?.Invoke(refback) ?? Task.CompletedTask);
 
             var adds = AddClass(TransitionEvent.Exit, TransitionEventPhase.Active);
 
@@ -198,7 +202,7 @@ namespace Skclusive.Transition.Component
 
         protected async Task HandleExitedAsync(IReference refback)
         {
-            await OnExited.InvokeAsync(refback);
+            await (OnExited?.Invoke(refback) ?? Task.CompletedTask);
 
             var removes = RemoveClasses(TransitionEvent.Exit);
 

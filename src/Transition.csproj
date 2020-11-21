@@ -1,9 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
 
   <PropertyGroup>
-    <VersionPrefix>5.0.0</VersionPrefix>
+    <VersionPrefix>5.1.0</VersionPrefix>
     <VersionSuffix>$(VersionSuffix)</VersionSuffix>
-    <TargetFramework>net5.0</TargetFramework>
+    <TargetFrameworks>netstandard2.0;net5.0</TargetFrameworks>
+    <RazorLangVersion>3.0</RazorLangVersion>
     <AssemblyName>Skclusive.Transition.Component</AssemblyName>
     <PackageId>Skclusive.Transition.Component</PackageId>
     <RootNamespace>Skclusive.Transition.Component</RootNamespace>
@@ -15,12 +16,12 @@
     <RepositoryUrl>https://github.com/skclusive/Skclusive.Transition.Component</RepositoryUrl>
   </PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Skclusive.Script.DomHelpers" Version="5.0.0" />
+ <ItemGroup>
+    <PackageReference Include="Skclusive.Script.DomHelpers" Version="5.1.0" />
   </ItemGroup>
 
   <!-- <ItemGroup>
-    <ProjectReference Include="..\..\Skclusive.Script.DomHelpers\src\DomHelpers.csproj" Version="5.0.0" />
+    <ProjectReference Include="..\..\Skclusive.Script.DomHelpers\src\DomHelpers.csproj" Version="5.1.0" />
   </ItemGroup> -->
 
 </Project>
